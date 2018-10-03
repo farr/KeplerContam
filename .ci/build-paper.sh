@@ -1,4 +1,4 @@
-LATEXDIR=notes/
+LATEXDIR=notes
 LATEXFILE=mixture_notes.tex
 LATEXBASE=`basename $LATEXFILE .tex`
 
