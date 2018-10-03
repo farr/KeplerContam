@@ -1,0 +1,6 @@
+*.aux
+*.fdb_latexmk
+*.fls
+*.log
+mixture_notes.pdf
+*.synctex.gz
