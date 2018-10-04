@@ -69,6 +69,10 @@ model {
 
   target += 0.5*log_nextra; /* p(n_extra) ~ 1/sqrt(n_extra). */
 
+  /* Flat prior on mu (it's well-constrained by the likelihood anyway). */
+  sigma ~ lognormal(0, 1); /* Broad-ish prior on the bin-to-bin variation */
+  lambda ~ lognormal(0, 1); /* Broad-ish prior on the length scale in ln(P)-ln(R) space */
+
   for (i in 1:npl) {
     real log_fg;
     real log_bg;
