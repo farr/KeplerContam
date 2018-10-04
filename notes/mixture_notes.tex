@@ -1,5 +1,11 @@
 \documentclass[modern]{aastex62}
 
+\usepackage{amsmath}
+\usepackage{amssymb}
+
+\newcommand{\dd}{\mathrm{d}}
+\newcommand{\diff}[2]{\frac{\dd #1}{\dd #2}}
+
 \begin{document}
 
 \title{Notes on the Model}
@@ -12,7 +18,131 @@
   I discuss the contaminated mixture model that we are using.
 \end{abstract}
 
-\section{Model}
+\section{Hierarchical Likelihood}
+
+We assume, following \citet{Foreman-Mackey2014}, that the occurrence rate of
+planets is constant in some set of bins in the period-radius plane, $R_i \leq R
+< R_{i+1}$, $P_i \leq P \leq P_{i+1}$, $i = 1, \ldots, N_\mathrm{bin}$:
+%
+\begin{equation}
+  \diff{N}{\ln P \dd \ln R} = \begin{cases}
+  n_i & R_i \leq R < R_{i+1} \textnormal{ and } P_i \leq P \leq P_{i+1} \\
+  \tilde{n} & \textnormal{otherwise}
+\end{cases}.
+\end{equation}
+%
+We include a ``catch all'' bin, where the rate density is $\tilde{n}$ to avoid
+issues at the edges of the set of bins; with the catch-all bin, we can cut the
+data set several ``sigma'' outside the region of interest with bins, and objects
+that land on the edges will be distributed between the bins and the
+``catch-all'' bin.  Note that, for all practical purposes, Kepler measures the
+period perfectly, so the only uncertainty in any of the measurements is the
+radius.
+
+We also assume that the contaminated background follows a similar
+constant-in-bin model,
+%
+\begin{equation}
+  \diff{N_{\mathrm{bg}}}{\ln P \dd \ln R} = b_i \quad R_i \leq R < R_{i+1} \textnormal{ and } P_i \leq P \leq P_{i+1},
+\end{equation}
+%
+but here we do not include the extra bin (since we don't care about the
+background-foreground distinction in that bin).
+
+Let us assume that the likelihood is well-approximated by a delta function in
+period and a log-normal distribution for the radius for each planet detection:
+%
+\begin{equation}
+    p\left( d \mid \ln P, \ln R \right) \propto \delta\left( \ln P_\mathrm{obs} - \ln P \right) \frac{1}{\sqrt{2\pi} \sigma_{\ln R}} \exp\left[ \frac{\left( \ln R_\mathrm{obs} - \ln R \right)^2}{2 \sigma_{\ln R}^2} \right].
+\end{equation}
+%
+Then the hierarchical likelihood for a set of planet candidates can be obtained
+by integrating out the ``nuisance'' parameters giving the true period and radius
+of each planet \citep{Mandel2018,Loredo2004}:
+%
+\begin{multline}
+  \label{eq:hier-likelihood}
+  p\left( \left\{ d_j \right\} \mid \left\{ n_i \right\}, \tilde{n}, \left\{b_i \right\} \right) \propto  \left[ \prod_{j = 1}^{N} \int \dd \ln P_j \, \dd \ln R_j \, p\left( d_j \mid \ln P_j, \ln R_j \right) \right. \\ \times \left. \left( \diff{N}{\ln P_j \dd \ln R_j} + \diff{N_\mathrm{bg}}{\ln P_j \dd \ln R_j} \right) \right] \exp\left[ - N_\mathrm{ex} - N_\mathrm{bg} - \tilde{N} \right];
+\end{multline}
+%
+where $N_\mathrm{ex}$ is the expected number of true planet detections within the
+grid of cells,
+%
+\begin{equation}
+  N_\mathrm{ex} = \sum_{i=1}^{N_\mathrm{bin}} n_i \Delta \ln P_i \Delta \ln R_i \sum_{k = 1}^{N_\mathrm{stars}}  \left\langle P_\mathrm{det}^{(k)} \right\rangle_i,
+\end{equation}
+%
+where $\left\langle P_\mathrm{det}^{(k)} \right\rangle_i$ is the detection
+probability for a planet around star $k$ averaged over cell $i$ for a flat
+population in $\ln P$ and $\ln R$; $N_\mathrm{bg}$ is the expected number of
+background observations
+%
+\begin{equation}
+  N_\mathrm{bg} = \sum_{i=1}^{N_\mathrm{bin}} b_i \Delta \ln P_i \Delta \ln R_i;
+\end{equation}
+%
+and $\tilde{N}$ is the expected number of detections in the ``catch all'' bin
+%
+\begin{equation}
+  \tilde{N} = \tilde{n} \tilde{V},
+\end{equation}
+%
+where $\tilde{V}$ is the volume of the catch-all in $\ln P$-$\ln R$ space.
+Because the population is assumed to be constant in bins, the integrals in Eq.
+\eqref{eq:hier-likelihood} reduce to
+%
+\begin{equation}
+  \label{eq:reduced-likelihood}
+  p\left( \left\{ d_j \right\} \mid \left\{ n_i \right\}, \tilde{n}, \left\{b_i \right\} \right) \propto  \left[ \prod_{j = 1}^{N} \tilde{w}_j \tilde{n} + \sum_{i=1}^{N_\mathrm{bin}} w_{ji} \left( n_i + b_i \right) \right] \exp\left[ - N_\mathrm{ex} - N_\mathrm{bg} - \tilde{N} \right],
+\end{equation}
+%
+where
+%
+\begin{equation}
+  w_{ji} = \int_{R_i \leq R_j < R_{i+1} \cap P_i \leq P_j < P_{i+1}} \dd \ln P_j \, \dd \ln R_j \, p\left( d_j \mid \ln P_j, \ln R_j \right),
+\end{equation}
+%
+are weights assigned to each bin (similarly for $\tilde{w}_j$ for the catch-all
+bin).  The $w_{ji}$ can be pre-computed, as they depend only on the bin
+boundaries and the observed periods, radii, and radius uncertainties.
+
+\section{Prior}
+
+The foreground and background per-bin rates, $n_i$ and $b_i$, are degenerate in
+the likelihood in Eq.\ \eqref{eq:reduced-likelihood}.  We can break the
+degeneracy using an informative prior on one or both rate distributions.  Here
+we will assume that we have \emph{measured} the background contamination rate
+(perhaps imperfectly) through some independent process, and incorporate this
+through an informative prior on the background rate densities $b_i$.
+
+Following \citet{Formean-Mackey2014}, we choose to estimate the background $b_i$
+by using the results of a search over \emph{inverted} Kepler lightcurves using
+the same pipelines used to produce the catalog \citep{Coughlin2017}.  TODO: more
+details here.  We supply a log-normal prior on $b_i$ based on the observed count
+of non \texttt{FP} inverted-lightcurve candidate events and a relative
+uncertainty of $1/\sqrt{N}$.
+
+We choose to implement a Gaussian process prior on the (log of the) $n_i$.  We
+choose a constant-mean, squared exponential covariance GP on the log-rates:
+%
+\begin{equation}
+  \ln \vec{n} \sim N\left( \mu \vec{1} , \mathbf{\Sigma} \right),
+\end{equation}
+%
+with
+%
+\begin{equation}
+  \Sigma_{ij} = \sigma^2 \left( 1 + \epsilon \delta_{ij} \right) \exp\left[ -\frac{\left| \Delta \vec{x}_{ij} \right|^2}{2 \lambda^2} \right].
+\end{equation}
+%
+The single-bin variance is $\sigma^2 \left( 1 + \epsilon \right)$, $\epsilon \ll
+1$ is a fractional white-noise component added to the diagonal terms of the
+matrix for stability, $\Delta \vec{x}_{ij}$ is the displacement vector between
+the centers of bin $i$ and bin $j$ in the $\ln P$-$\ln R$ plane, and $\lambda$
+is a correlation length scale in this plane\footnote{A natural extension would
+be to allow the $\ln P$ and $\ln R$ dimensions to have \emph{independent} length
+scales; or even to impose an arbitrary \emph{metric} matrix that would allow for
+arbitrary anisotropy in the correlations.}.
 
 \bibliography{mixture_notes}
 
