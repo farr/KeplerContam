@@ -23,7 +23,7 @@ bin_size = 2.  # fractional size of the period and radius bins
 inverted_errors = 1.3  # relative error assumed for inverted catalog
 
 
-def load_catalog(path='data/q1_q17_dr25_koi.csv'):
+def load_catalog(path='../data/q1_q17_dr25_koi.csv'):
     data = read_table(path)
     # column names relevant to us, and their simpler counterparts
     catalog_names = ['koi_period', 'koi_period_err1', 'koi_period_err2',
@@ -51,7 +51,7 @@ def load_catalog(path='data/q1_q17_dr25_koi.csv'):
     return data
 
 
-def load_inverted(path='data/kplr_dr25_inv_tces.txt'):
+def load_inverted(path='../data/kplr_dr25_inv_tces.txt'):
     # read the table
     data = read_table(path)
     # column names relevant to us, and their simpler counterparts
